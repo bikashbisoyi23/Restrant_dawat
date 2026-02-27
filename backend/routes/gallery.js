@@ -1,49 +1,20 @@
 import express from 'express';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { getDb } from '../database.js';
+import { uploadCloud, cloudinary } from '../config/cloudinary.js';
+import Gallery from '../models/Gallery.js';
 
 const router = express.Router();
-
-// Multer config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = 'public/uploads';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only images and videos are allowed!'));
-        }
-    }
-});
 
 // GET /api/gallery - Get all gallery items
 router.get('/', async (req, res) => {
     try {
-        const db = await getDb();
-        res.json({ success: true, data: db.data.gallery });
+        const items = await Gallery.find().sort({ order: 1, createdAt: -1 });
+        res.json({ success: true, data: items });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// POST /api/gallery - Admin upload to gallery
+// Admin auth middleware
 const adminAuth = (req, res, next) => {
     const token = req.headers['x-admin-token'];
     if (!token) {
@@ -52,26 +23,28 @@ const adminAuth = (req, res, next) => {
     next();
 };
 
-router.post('/', adminAuth, upload.single('media'), async (req, res) => {
+// POST /api/gallery - Admin upload to gallery
+// Note: We're expecting field name 'media' in the multipart form format
+router.post('/', adminAuth, uploadCloud.single('media'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No file uploaded' });
         }
 
-        const db = await getDb();
         const { caption } = req.body;
-        const type = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
+        // Cloudinary automatically infers resource_type based on the uploaded file
+        // The mimetypes map generally as: video/* -> video, image/* -> image
+        const isVideo = req.file.mimetype && req.file.mimetype.startsWith('video');
+        const type = isVideo ? 'video' : 'image';
 
-        const newItem = {
+        const newItem = new Gallery({
             id: Date.now().toString(),
-            url: `/uploads/${req.file.filename}`,
+            url: req.file.path, // req.file.path contains the secure Cloudinary URL
             type,
-            caption: caption || '',
-            created_at: new Date().toISOString()
-        };
+            caption: caption || ''
+        });
 
-        db.data.gallery.push(newItem);
-        await db.write();
+        await newItem.save();
 
         res.status(201).json({ success: true, data: newItem });
     } catch (err) {
@@ -82,25 +55,28 @@ router.post('/', adminAuth, upload.single('media'), async (req, res) => {
 // DELETE /api/gallery/:id - Admin delete from gallery
 router.delete('/:id', adminAuth, async (req, res) => {
     try {
-        const db = await getDb();
         const id = req.params.id;
-        const index = db.data.gallery.findIndex(i => i.id === id);
+        const item = await Gallery.findOne({ id });
 
-        if (index === -1) {
+        if (!item) {
             return res.status(404).json({ success: false, message: 'Item not found' });
         }
 
-        // Optional: Remove file from disk
-        const item = db.data.gallery[index];
-        const filePath = path.join(process.cwd(), 'public', item.url);
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+        // Extract the Cloudinary public_id from the URL to delete the asset
+        // Example URL: https://res.cloudinary.com/dnzku5l6w/image/upload/v1734567890/hotel_dawat/xyz123.jpg
+        const urlParts = item.url.split('/');
+        const fileWithExt = urlParts[urlParts.length - 1]; // xyz123.jpg
+        const publicId = `hotel_dawat/${fileWithExt.split('.')[0]}`; // hotel_dawat/xyz123
+
+        try {
+            await cloudinary.uploader.destroy(publicId, { resource_type: item.type });
+        } catch (cloudErr) {
+            console.error('Failed to delete from Cloudinary:', cloudErr);
         }
 
-        db.data.gallery.splice(index, 1);
-        await db.write();
+        await Gallery.deleteOne({ id });
+        res.json({ success: true, message: 'Item deleted safely' });
 
-        res.json({ success: true, message: 'Item deleted' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

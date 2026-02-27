@@ -1,17 +1,33 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { getDb } from '../database.js';
+import Reservation from '../models/Reservation.js';
+import Table from '../models/Table.js';
+import Menu from '../models/Menu.js';
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const db = await getDb();
-        const reservations = db.data.reservations.map(r => {
-            const table = db.data.tables.find(t => t.id === r.table_id);
-            return { ...r, table_name: table?.name, table_seats: table?.seats, table_location: table?.location };
-        }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        res.json({ success: true, data: reservations });
+        const reservations = await Reservation.find().sort({ createdAt: -1 });
+
+        // We need to fetch tables to append table name, seats and location to mimic previous behavior
+        const tables = await Table.find();
+        const tablesMap = tables.reduce((acc, t) => {
+            acc[t.id] = t;
+            return acc;
+        }, {});
+
+        const formattedReservations = reservations.map(r => {
+            const table = tablesMap[r.tableId];
+            return {
+                ...r.toObject(),
+                table_name: table?.name,
+                table_seats: table?.seats,
+                table_location: table?.location
+            };
+        });
+
+        res.json({ success: true, data: formattedReservations });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -19,11 +35,19 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const db = await getDb();
-        const r = db.data.reservations.find(r => r.id === req.params.id);
+        const r = await Reservation.findOne({ id: req.params.id });
         if (!r) return res.status(404).json({ success: false, message: 'Reservation not found' });
-        const table = db.data.tables.find(t => t.id === r.table_id);
-        res.json({ success: true, data: { ...r, table_name: table?.name, table_seats: table?.seats, table_location: table?.location } });
+
+        const table = await Table.findOne({ id: r.tableId });
+        res.json({
+            success: true,
+            data: {
+                ...r.toObject(),
+                table_name: table?.name,
+                table_seats: table?.seats,
+                table_location: table?.location
+            }
+        });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -31,52 +55,74 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const db = await getDb();
-        const { customer_name, email, phone, date, time, guests, table_id, special_requests, booked_by, pre_ordered_items } = req.body;
+        const { customer_name, email, phone, date, time, guests, table_id, special_requests, pre_ordered_items } = req.body;
 
         if (!customer_name || !phone || !date || !time || !guests || !table_id) {
             return res.status(400).json({ success: false, message: 'Missing required fields' });
         }
 
-        const conflict = db.data.reservations.find(
-            r => r.table_id === Number(table_id) && r.date === date && r.time === time && r.status !== 'cancelled'
-        );
+        const conflict = await Reservation.findOne({
+            tableId: table_id.toString(),
+            date,
+            timeSlot: time,
+            status: { $ne: 'cancelled' }
+        });
+
         if (conflict) return res.status(409).json({ success: false, message: 'This table is already booked for that date and time' });
 
-        const table = db.data.tables.find(t => t.id === Number(table_id) && t.is_active);
+        const table = await Table.findOne({ id: table_id.toString(), is_available: true });
         if (!table) return res.status(404).json({ success: false, message: 'Table not found' });
 
         // Calculate total amount if items are present
         let total_amount = 0;
         const saved_items = [];
+
         if (pre_ordered_items && Array.isArray(pre_ordered_items)) {
-            pre_ordered_items.forEach(item => {
-                const menuItem = db.data.menu_items.find(m => m.id === item.item_id);
+            for (const item of pre_ordered_items) {
+                const menuItem = await Menu.findOne({ id: item.item_id.toString() });
                 if (menuItem) {
                     const price = menuItem.price;
                     const qty = item.quantity || 1;
                     total_amount += price * qty;
-                    saved_items.push({ item_id: menuItem.id, name: menuItem.name, price, quantity: qty });
+                    // Adding name here for legacy frontend compatibility
+                    saved_items.push({
+                        itemId: menuItem.id,
+                        name: menuItem.name,
+                        price,
+                        quantity: qty
+                    });
                 }
-            });
+            }
         }
 
-        const newReservation = {
+        const newReservation = new Reservation({
             id: uuidv4(),
-            customer_name, email: email || '', phone, date, time,
-            guests: Number(guests), table_id: Number(table_id),
+            customerName: customer_name,
+            customerEmail: email || '',
+            customerPhone: phone,
+            date,
+            timeSlot: time,
+            guests: Number(guests),
+            tableId: table_id.toString(),
             status: 'confirmed',
-            special_requests: special_requests || '',
-            booked_by: booked_by || 'customer',
+            specialRequests: special_requests || '',
             pre_ordered_items: saved_items,
             total_amount,
-            created_at: new Date().toISOString(),
-        };
+            createdAt: new Date().toISOString()
+        });
 
-        db.data.reservations.push(newReservation);
-        await db.write();
+        await newReservation.save();
 
-        res.status(201).json({ success: true, message: 'Reservation confirmed!', data: { ...newReservation, table_name: table.name, table_seats: table.seats, table_location: table.location } });
+        res.status(201).json({
+            success: true,
+            message: 'Reservation confirmed!',
+            data: {
+                ...newReservation.toObject(),
+                table_name: table.name,
+                table_seats: table.seats,
+                table_location: table.location
+            }
+        });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -84,16 +130,19 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const db = await getDb();
-        const idx = db.data.reservations.findIndex(r => r.id === req.params.id);
-        if (idx === -1) return res.status(404).json({ success: false, message: 'Reservation not found' });
-
         const { status, special_requests } = req.body;
-        if (status) db.data.reservations[idx].status = status;
-        if (special_requests !== undefined) db.data.reservations[idx].special_requests = special_requests;
-        await db.write();
+        const updateData = {};
+        if (status) updateData.status = status;
+        if (special_requests !== undefined) updateData.specialRequests = special_requests;
 
-        res.json({ success: true, message: 'Reservation updated', data: db.data.reservations[idx] });
+        const updated = await Reservation.findOneAndUpdate(
+            { id: req.params.id },
+            { $set: updateData },
+            { new: true }
+        );
+
+        if (!updated) return res.status(404).json({ success: false, message: 'Reservation not found' });
+        res.json({ success: true, message: 'Reservation updated', data: updated });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -101,22 +150,28 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     try {
-        const db = await getDb();
-        const idx = db.data.reservations.findIndex(r => r.id === req.params.id);
-        if (idx === -1) return res.status(404).json({ success: false, message: 'Reservation not found' });
+        const r = await Reservation.findOne({ id: req.params.id });
+        if (!r) return res.status(404).json({ success: false, message: 'Reservation not found' });
 
-        const reservation = db.data.reservations[idx];
+        const isCustomer = !req.headers['x-admin-token'];
 
-        // Strict 30-minute cancellation rule for customers
-        const createdTime = new Date(reservation.created_at).getTime();
-        const thirtyMins = 30 * 60 * 1000;
-        if (Date.now() - createdTime > thirtyMins) {
-            return res.status(403).json({ success: false, message: 'Reservations can only be cancelled within 30 minutes of booking. Please contact the hotel directly.' });
+        if (isCustomer) {
+            const bookingDate = new Date(r.createdAt);
+            const now = new Date();
+            const diffInMinutes = (now - bookingDate) / (1000 * 60);
+
+            if (diffInMinutes > 30) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Cancellations are only allowed within 30 minutes of booking.'
+                });
+            }
         }
 
-        db.data.reservations[idx].status = 'cancelled';
-        await db.write();
-        res.json({ success: true, message: 'Reservation cancelled successfully' });
+        r.status = 'cancelled';
+        await r.save();
+
+        res.json({ success: true, message: 'Reservation cancelled successfully', data: r });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

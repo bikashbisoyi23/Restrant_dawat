@@ -1,13 +1,15 @@
 import express from 'express';
-import { getDb } from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import Review from '../models/Review.js';
+import Reservation from '../models/Reservation.js';
 
 const router = express.Router();
 
 // GET /api/reviews - Get all public reviews
 router.get('/', async (req, res) => {
     try {
-        const db = await getDb();
-        res.json({ success: true, data: db.data.reviews });
+        const reviews = await Review.find().sort({ createdAt: -1 });
+        res.json({ success: true, data: reviews });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -16,7 +18,6 @@ router.get('/', async (req, res) => {
 // POST /api/reviews - Submit a review (Booking ID must be valid and status 'completed')
 router.post('/', async (req, res) => {
     try {
-        const db = await getDb();
         const { booking_id, customer_name, rating, comment } = req.body;
 
         if (!booking_id || !customer_name || !rating) {
@@ -29,7 +30,7 @@ router.post('/', async (req, res) => {
         }
 
         // Verify booking
-        const booking = db.data.reservations.find(r => r.id === booking_id);
+        const booking = await Reservation.findOne({ id: booking_id });
         if (!booking) {
             return res.status(404).json({ success: false, message: 'Invalid Booking ID' });
         }
@@ -39,21 +40,21 @@ router.post('/', async (req, res) => {
         }
 
         // Check if already reviewed
-        if (db.data.reviews.find(r => r.booking_id === booking_id)) {
+        const existingReview = await Review.findOne({ reservationId: booking_id });
+        if (existingReview) {
             return res.status(400).json({ success: false, message: 'You have already submitted a review for this booking' });
         }
 
-        const newReview = {
-            id: Date.now().toString(),
-            booking_id,
-            customer_name,
+        const newReview = new Review({
+            id: uuidv4(),
+            reservationId: booking_id,
+            customerName: customer_name,
             rating: validRating,
             comment: comment || '',
-            created_at: new Date().toISOString()
-        };
+            createdAt: new Date().toISOString()
+        });
 
-        db.data.reviews.push(newReview);
-        await db.write();
+        await newReview.save();
 
         res.status(201).json({ success: true, data: newReview });
     } catch (err) {
