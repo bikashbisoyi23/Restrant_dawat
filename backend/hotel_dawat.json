@@ -1,0 +1,531 @@
+{
+  "tables": [
+    {
+      "id": 1,
+      "name": "Table 1",
+      "seats": 2,
+      "location": "indoor",
+      "is_active": true
+    },
+    {
+      "id": 2,
+      "name": "Table 2",
+      "seats": 2,
+      "location": "indoor",
+      "is_active": true
+    },
+    {
+      "id": 3,
+      "name": "Table 3",
+      "seats": 4,
+      "location": "indoor",
+      "is_active": true
+    },
+    {
+      "id": 4,
+      "name": "Table 4",
+      "seats": 4,
+      "location": "indoor",
+      "is_active": true
+    },
+    {
+      "id": 5,
+      "name": "Table 5",
+      "seats": 4,
+      "location": "indoor",
+      "is_active": true
+    },
+    {
+      "id": 6,
+      "name": "Table 6",
+      "seats": 6,
+      "location": "indoor",
+      "is_active": true
+    },
+    {
+      "id": 7,
+      "name": "Table 7",
+      "seats": 6,
+      "location": "indoor",
+      "is_active": true
+    },
+    {
+      "id": 8,
+      "name": "Table 8",
+      "seats": 8,
+      "location": "indoor",
+      "is_active": true
+    },
+    {
+      "id": 9,
+      "name": "Table 9",
+      "seats": 4,
+      "location": "outdoor",
+      "is_active": true
+    },
+    {
+      "id": 10,
+      "name": "Table 10",
+      "seats": 4,
+      "location": "outdoor",
+      "is_active": true
+    },
+    {
+      "id": 11,
+      "name": "Table 11",
+      "seats": 6,
+      "location": "outdoor",
+      "is_active": true
+    },
+    {
+      "id": 12,
+      "name": "Table 12",
+      "seats": 8,
+      "location": "outdoor",
+      "is_active": true
+    },
+    {
+      "id": 13,
+      "name": "VIP Suite 1",
+      "seats": 10,
+      "location": "vip",
+      "is_active": true
+    },
+    {
+      "id": 14,
+      "name": "VIP Suite 2",
+      "seats": 12,
+      "location": "vip",
+      "is_active": true
+    }
+  ],
+  "reservations": [
+    {
+      "id": "9c559230-a6d5-456c-a3d2-7ef26cb82e08",
+      "customer_name": "Bikash Bisoyi",
+      "email": "mjhhbd@gmail.com",
+      "phone": "7894260109",
+      "date": "2026-05-04",
+      "time": "12:00 PM",
+      "guests": 1,
+      "table_id": 2,
+      "status": "completed",
+      "special_requests": "",
+      "booked_by": "customer",
+      "created_at": "2026-02-26T17:54:16.902Z"
+    },
+    {
+      "id": "aa727a78-a3c4-4774-bcc4-936064015081",
+      "customer_name": "Test User",
+      "email": "",
+      "phone": "+1234567890",
+      "date": "2026-02-28",
+      "time": "08:00 PM",
+      "guests": 2,
+      "table_id": 1,
+      "status": "completed",
+      "special_requests": "",
+      "booked_by": "customer",
+      "created_at": "2026-02-26T18:55:17.959Z"
+    },
+    {
+      "id": "a4189e53-d4f5-4892-b7e7-d80d64f92a2a",
+      "customer_name": "fdfxcgh",
+      "email": "",
+      "phone": "78921231953232",
+      "date": "2026-02-27",
+      "time": "01:00 PM",
+      "guests": 2,
+      "table_id": 10,
+      "status": "completed",
+      "special_requests": "",
+      "booked_by": "customer",
+      "pre_ordered_items": [
+        {
+          "item_id": 21,
+          "name": "Dawat Special Lassi",
+          "price": 120,
+          "quantity": 1
+        }
+      ],
+      "total_amount": 120,
+      "created_at": "2026-02-26T19:34:43.445Z"
+    },
+    {
+      "id": "7bccb1c0-8499-4490-bd43-c73042dc76b5",
+      "customer_name": " m,knjknj",
+      "email": "",
+      "phone": "8888856",
+      "date": "2026-02-27",
+      "time": "12:30 PM",
+      "guests": 2,
+      "table_id": 1,
+      "status": "completed",
+      "special_requests": "",
+      "booked_by": "customer",
+      "pre_ordered_items": [],
+      "total_amount": 0,
+      "created_at": "2026-02-27T04:58:40.185Z"
+    },
+    {
+      "id": "5ce3c8bf-98ff-462d-8079-e0b9ae7eb7d7",
+      "customer_name": "Test User",
+      "email": "test@example.com",
+      "phone": "03001234567",
+      "date": "2026-03-01",
+      "time": "07:00 PM",
+      "guests": 2,
+      "table_id": 1,
+      "status": "completed",
+      "special_requests": "",
+      "booked_by": "customer",
+      "pre_ordered_items": [],
+      "total_amount": 0,
+      "created_at": "2026-02-27T05:10:05.473Z"
+    },
+    {
+      "id": "89e98879-0fe5-4724-bb34-8c681c70286e",
+      "customer_name": "Test Cancel",
+      "email": "test@example.com",
+      "phone": "1234567890",
+      "date": "2030-01-01",
+      "time": "19:00",
+      "guests": 2,
+      "table_id": 1,
+      "status": "cancelled",
+      "special_requests": "",
+      "booked_by": "customer",
+      "pre_ordered_items": [],
+      "total_amount": 0,
+      "created_at": "2026-02-27T05:17:46.805Z"
+    },
+    {
+      "id": "20138cb4-ba54-431f-bcee-f65515189b5d",
+      "customer_name": "Test User",
+      "email": "",
+      "phone": "03001234567",
+      "date": "60228-02-20",
+      "time": "12:00 PM",
+      "guests": 2,
+      "table_id": 1,
+      "status": "cancelled",
+      "special_requests": "",
+      "booked_by": "customer",
+      "pre_ordered_items": [],
+      "total_amount": 0,
+      "created_at": "2026-02-27T05:20:48.495Z"
+    },
+    {
+      "id": "a5b13335-e374-4343-95e3-73044d00b574",
+      "customer_name": "Bikash Bisoyi",
+      "email": "bisoyi2006@gmail.com",
+      "phone": "+917894260109",
+      "date": "2026-02-27",
+      "time": "08:30 PM",
+      "guests": 9,
+      "table_id": 13,
+      "status": "cancelled",
+      "special_requests": "",
+      "booked_by": "customer",
+      "pre_ordered_items": [],
+      "total_amount": 0,
+      "created_at": "2026-02-27T08:26:51.772Z"
+    },
+    {
+      "id": "9a30eabd-df0d-4a1c-9ce3-3da1b4415133",
+      "customer_name": "Bikash Bisoyi",
+      "email": "bisoyi2006@gmail.com",
+      "phone": "+917894260109",
+      "date": "2026-02-27",
+      "time": "12:30 PM",
+      "guests": 1,
+      "table_id": 2,
+      "status": "confirmed",
+      "special_requests": "",
+      "booked_by": "customer",
+      "pre_ordered_items": [
+        {
+          "item_id": 1,
+          "name": "Dawat Special Seekh Kebab",
+          "price": 320,
+          "quantity": 1
+        },
+        {
+          "item_id": 8,
+          "name": "Dal Makhani",
+          "price": 280,
+          "quantity": 1
+        }
+      ],
+      "total_amount": 600,
+      "created_at": "2026-02-27T08:57:45.479Z"
+    }
+  ],
+  "menu_items": [
+    {
+      "id": 1,
+      "name": "Dawat Special Seekh Kebab",
+      "description": "Minced lamb & spice kebabs grilled to perfection",
+      "price": 320,
+      "category": "starters",
+      "is_available": true,
+      "is_featured": true,
+      "image_url": "/uploads/1772184330959-624827697.jpeg"
+    },
+    {
+      "id": 2,
+      "name": "Paneer Tikka",
+      "description": "Marinated cottage cheese cubes in tandoor with bell peppers",
+      "price": 280,
+      "category": "starters",
+      "is_available": true,
+      "is_featured": true,
+      "image_url": "/uploads/default_starter.png"
+    },
+    {
+      "id": 3,
+      "name": "Crispy Prawns",
+      "description": "Tiger prawns with spiced batter, tamarind chutney",
+      "price": 380,
+      "category": "starters",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_starter.png"
+    },
+    {
+      "id": 4,
+      "name": "Veg Shammi Kebab",
+      "description": "Crispy lentil patties with mint & coriander",
+      "price": 220,
+      "category": "starters",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_starter.png"
+    },
+    {
+      "id": 5,
+      "name": "Chicken Malai Tikka",
+      "description": "Tender chicken marinated in cream & spices",
+      "price": 350,
+      "category": "starters",
+      "is_available": true,
+      "is_featured": true,
+      "image_url": "/uploads/default_starter.png"
+    },
+    {
+      "id": 6,
+      "name": "Dawat Signature Biryani",
+      "description": "Slow-cooked dum biryani with saffron & whole spices",
+      "price": 520,
+      "category": "mains",
+      "is_available": true,
+      "is_featured": true,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 7,
+      "name": "Butter Chicken",
+      "description": "Classic creamy tomato-based chicken curry",
+      "price": 420,
+      "category": "mains",
+      "is_available": true,
+      "is_featured": true,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 8,
+      "name": "Dal Makhani",
+      "description": "24-hour slow-cooked black lentils with cream & butter",
+      "price": 280,
+      "category": "mains",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 9,
+      "name": "Mutton Rogan Josh",
+      "description": "Aromatic Kashmiri mutton curry with whole spices",
+      "price": 580,
+      "category": "mains",
+      "is_available": true,
+      "is_featured": true,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 10,
+      "name": "Paneer Butter Masala",
+      "description": "Rich tomato-cream curry with soft cottage cheese",
+      "price": 320,
+      "category": "mains",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 12,
+      "name": "Hyderabadi Chicken Curry",
+      "description": "Bold Hyderabadi-style chicken with tangy gravy",
+      "price": 440,
+      "category": "mains",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 13,
+      "name": "Garlic Naan",
+      "description": "Fluffy tandoor bread with garlic & coriander butter",
+      "price": 80,
+      "category": "breads",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 14,
+      "name": "Stuffed Paratha",
+      "description": "Whole-wheat bread stuffed with spiced potato or paneer",
+      "price": 120,
+      "category": "breads",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 15,
+      "name": "Roomali Roti",
+      "description": "Paper-thin handkerchief bread",
+      "price": 60,
+      "category": "breads",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 16,
+      "name": "Laccha Paratha",
+      "description": "Multi-layered flaky whole-wheat paratha",
+      "price": 90,
+      "category": "breads",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 17,
+      "name": "Gulab Jamun",
+      "description": "Warm milk-solid dumplings in rose-flavoured sugar syrup",
+      "price": 150,
+      "category": "desserts",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_dessert.png"
+    },
+    {
+      "id": 18,
+      "name": "Dawat Firni",
+      "description": "Chilled rice pudding with pistachio & rosewater",
+      "price": 180,
+      "category": "desserts",
+      "is_available": true,
+      "is_featured": true,
+      "image_url": "/uploads/default_dessert.png"
+    },
+    {
+      "id": 19,
+      "name": "Gajar Ka Halwa",
+      "description": "Slow-cooked carrot pudding with khoya & dry fruits",
+      "price": 200,
+      "category": "desserts",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_dessert.png"
+    },
+    {
+      "id": 20,
+      "name": "Kulfi Falooda",
+      "description": "Traditional Indian ice cream with vermicelli & basil seeds",
+      "price": 220,
+      "category": "desserts",
+      "is_available": true,
+      "is_featured": true,
+      "image_url": "/uploads/default_dessert.png"
+    },
+    {
+      "id": 21,
+      "name": "Dawat Special Lassi",
+      "description": "Thick creamy yoghurt drink — sweet or salted",
+      "price": 120,
+      "category": "beverages",
+      "is_available": true,
+      "is_featured": true,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 22,
+      "name": "Masala Chai",
+      "description": "Aromatic spiced Indian tea",
+      "price": 80,
+      "category": "beverages",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 23,
+      "name": "Fresh Watermelon Juice",
+      "description": "Chilled fresh-pressed watermelon juice",
+      "price": 100,
+      "category": "beverages",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_main.png"
+    },
+    {
+      "id": 24,
+      "name": "Mango Lassi",
+      "description": "Refreshing mango & yoghurt smoothie",
+      "price": 140,
+      "category": "beverages",
+      "is_available": true,
+      "is_featured": false,
+      "image_url": "/uploads/default_main.png"
+    }
+  ],
+  "offers": [
+    {
+      "id": 1,
+      "title": "Family Biryani Feast",
+      "description": "Dawat Signature Biryani + 4 Naans + Raita + Dessert for 4 people",
+      "original_price": 1200,
+      "offer_price": 849,
+      "badge": "Family Deal",
+      "image_url": "",
+      "is_active": true,
+      "created_at": "2026-02-26T17:40:12.985Z"
+    },
+    {
+      "id": 2,
+      "title": "Weekend BBQ Platter",
+      "description": "Assorted Kebabs (12 pcs) + Mint Chutney + Salad",
+      "original_price": 980,
+      "offer_price": 699,
+      "badge": "Weekend Special",
+      "image_url": "",
+      "is_active": true,
+      "created_at": "2026-02-26T17:40:12.990Z"
+    }
+  ],
+  "contacts": [],
+  "gallery": [
+    {
+      "id": "ig-promo-1",
+      "url": "/uploads/promo1.jpg",
+      "type": "image",
+      "caption": "Experience Elegance at Hotel Dawat On Plate",
+      "created_at": "2026-02-27T12:00:00.000Z"
+    }
+  ],
+  "reviews": []
+}
