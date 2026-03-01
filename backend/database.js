@@ -8,6 +8,6 @@ export async function connectDB() {
     console.log('✅ Connected to MongoDB Atlas');
   } catch (error) {
     console.error('❌ Error connecting to MongoDB:', error.message);
-    process.exit(1);
+    throw error;
   }
 }
