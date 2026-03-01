@@ -109,9 +109,9 @@ export default function AdminGallery() {
 
                             <div style={{ height: 180, width: '100%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 {item.type === 'video' ? (
-                                    <video src={`${UPLOADS_URL}${item.url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} controls />
+                                    <video src={item.url.startsWith('http') ? item.url : `${UPLOADS_URL}${item.url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} controls />
                                 ) : (
-                                    <img src={`${UPLOADS_URL}${item.url}`} alt={item.caption} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src={item.url.startsWith('http') ? item.url : `${UPLOADS_URL}${item.url}`} alt={item.caption} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 )}
                             </div>
                             {item.caption && (

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Star, Users, Clock, Award, Flame, Image as ImageIcon, Quote } from 'lucide-react';
+import { ChevronRight, Star, Users, Clock, Award, Flame, Calendar, Image as ImageIcon } from 'lucide-react';
 import { menuApi, offersApi, reviewsApi, UPLOADS_URL } from '../services/api';
+import { DEFAULT_IMAGES } from '../utils/defaultImages';
+import { ITEM_IMAGES } from '../utils/itemImages';
 
 export default function HomePage() {
     const [featured, setFeatured] = useState([]);
@@ -88,12 +90,14 @@ export default function HomePage() {
                                         <span className="badge" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.4)', background: 'linear-gradient(135deg, #e74c3c, #c0392b)' }}>{offer.badge}</span>
                                     </div>
 
-                                    <div style={{ height: 200, width: '100%', background: '#000', position: 'relative' }}>
-                                        {offer.image_url ? (
-                                            <img src={`${UPLOADS_URL}${offer.image_url}`} alt={offer.title} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} loading="lazy" />
-                                        ) : (
-                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem' }}>🍱</div>
-                                        )}
+                                    <div style={{ height: 220, position: 'relative', overflow: 'hidden', background: '#000' }}>
+                                        <img
+                                            src={offer.image_url && offer.image_url.startsWith('http') ? offer.image_url : `${UPLOADS_URL}${offer.image_url}`}
+                                            alt={offer.title}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }}
+                                            loading="lazy"
+                                            onError={(e) => { e.currentTarget.src = DEFAULT_IMAGES.fallback; }}
+                                        />
                                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,10,7,1), transparent)' }} />
                                     </div>
 
@@ -101,10 +105,10 @@ export default function HomePage() {
                                         <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.4rem', color: '#FFF8F0', marginBottom: 8 }}>{offer.title}</h3>
                                         <p style={{ color: '#9A8A7A', fontSize: '0.9rem', marginBottom: 16, lineHeight: 1.6 }}>{offer.description}</p>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                            <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.6rem', color: '#D4A853', fontWeight: 700 }}>₹{offer.offer_price}</span>
+                                            <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.6rem', color: '#D4A853', fontWeight: 700 }}>₹{offer.discounted_price}</span>
                                             {offer.original_price && <span style={{ color: '#9A8A7A', textDecoration: 'line-through', fontSize: '1rem' }}>₹{offer.original_price}</span>}
                                             {offer.original_price && <span style={{ background: 'rgba(39,174,96,0.2)', color: '#2ecc71', padding: '2px 8px', borderRadius: 20, fontSize: '0.8rem', fontWeight: 700 }}>
-                                                {Math.round((1 - offer.offer_price / offer.original_price) * 100)}% OFF
+                                                {Math.round((1 - offer.discounted_price / offer.original_price) * 100)}% OFF
                                             </span>}
                                         </div>
                                         <Link to="/book" className="btn btn-primary btn-sm" style={{ marginTop: 16 }}>Book & Enjoy</Link>
@@ -151,9 +155,9 @@ export default function HomePage() {
                             <div key={item.id} className="glass-card" style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: 0, overflow: 'hidden' }}>
                                 <div style={{ height: 160, width: '100%', background: 'rgba(212,168,83,0.05)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     {item.image_url ? (
-                                        <img src={`${UPLOADS_URL}${item.image_url}`} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                                        <img src={item.image_url.startsWith('http') ? item.image_url : `${UPLOADS_URL}${item.image_url}`} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" onError={(e) => { e.currentTarget.src = ITEM_IMAGES[item.name] || DEFAULT_IMAGES[item.category] || DEFAULT_IMAGES.fallback; }} />
                                     ) : (
-                                        <ImageIcon size={40} color="rgba(212,168,83,0.3)" />
+                                        <img src={ITEM_IMAGES[item.name] || DEFAULT_IMAGES[item.category] || DEFAULT_IMAGES.fallback} alt="Featured Meal" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} loading="lazy" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGES[item.category] || DEFAULT_IMAGES.fallback; }} />
                                     )}
                                     <span style={{ position: 'absolute', bottom: 10, left: 10, background: 'rgba(15,10,7,0.85)', color: '#D4A853', fontSize: '0.7rem', fontWeight: 700, padding: '4px 10px', borderRadius: 12, textTransform: 'uppercase', backdropFilter: 'blur(4px)' }}>
                                         {item.category}

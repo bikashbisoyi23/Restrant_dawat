@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = 'http://10.36.224.208:5000/api';
-export const UPLOADS_URL = 'http://10.36.224.208:5000'; // For images
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const UPLOADS_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'; // For legacy static images
 
 const api = axios.create({ baseURL: API_BASE });
 
@@ -13,8 +13,8 @@ api.interceptors.request.use(config => {
 });
 
 export const menuApi = {
-    getAll: () => api.get('/menu'),
-    getFeatured: () => api.get('/menu/featured'),
+    getAll: () => api.get('/menu?t=' + Date.now()),
+    getFeatured: () => api.get('/menu/featured?t=' + Date.now()),
 };
 
 export const tablesApi = {
@@ -29,7 +29,7 @@ export const reservationsApi = {
 };
 
 export const offersApi = {
-    getPublic: () => api.get('/offers'),
+    getPublic: () => api.get('/offers?t=' + Date.now()),
 };
 
 export const contactApi = {
@@ -37,7 +37,7 @@ export const contactApi = {
 };
 
 export const galleryApi = {
-    getAll: () => api.get('/gallery'),
+    getAll: () => api.get('/gallery?t=' + Date.now()),
 };
 
 export const reviewsApi = {
@@ -58,6 +58,7 @@ export const adminApi = {
     deleteOffer: (id) => api.delete(`/admin/offers/${id}`),
     getContacts: () => api.get('/admin/contacts'),
     // New V2 Endpoints
+    getAllMenu: () => api.get('/admin/menu?t=' + Date.now()),
     createMenu: (data) => api.post('/admin/menu', data),
     updateMenu: (id, data) => api.put(`/admin/menu/${id}`, data),
     deleteMenu: (id) => api.delete(`/admin/menu/${id}`),

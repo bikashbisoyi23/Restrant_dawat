@@ -1,6 +1,8 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { uploadCloud, cloudinary } from '../config/cloudinary.js';
+import multer from 'multer';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import Menu from '../models/Menu.js';
 import Reservation from '../models/Reservation.js';
 import Table from '../models/Table.js';
@@ -9,6 +11,32 @@ import Contact from '../models/Contact.js';
 import Review from '../models/Review.js';
 
 const router = express.Router();
+
+// Delete helper for Cloudinary
+const deleteCloudinaryImage = async (imageUrl) => {
+    try {
+        if (!imageUrl) return;
+        const urlParts = imageUrl.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const publicId = filename.split('.')[0];
+        await cloudinary.uploader.destroy(`hotel_dawat/${publicId}`);
+    } catch (err) {
+        console.error("Cloudinary deletion error:", err);
+    }
+};
+
+// 1MB max file size specifically for Menu/Offers
+const menuStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'hotel_dawat',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'mp4']
+    }
+});
+const uploadMenu = multer({
+    storage: menuStorage,
+    limits: { fileSize: 1024 * 1024 } // 1MB constraint
+});
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'dawat@2024';
@@ -120,7 +148,7 @@ router.put('/reservations/:id/status', requireAdmin, async (req, res) => {
         );
 
         if (!updated) return res.status(404).json({ success: false, message: 'Reservation not found' });
-        res.json({ success: true, message: `Status updated to ${status}` });
+        res.json({ success: true, message: 'Status updated to ' + status });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -171,7 +199,25 @@ router.post('/reservations', requireAdmin, async (req, res) => {
 });
 
 // --- MENU MANAGEMENT ---
-router.post('/menu', requireAdmin, uploadCloud.single('image'), async (req, res) => {
+router.get('/menu', requireAdmin, async (req, res) => {
+    try {
+        const items = await Menu.find().sort({ createdAt: -1 });
+        res.json({ success: true, data: items });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+router.post('/menu', requireAdmin, (req, res, next) => {
+    uploadMenu.single('image')(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({ success: false, message: 'Image upload error: ' + err.message });
+        } else if (err) {
+            return res.status(500).json({ success: false, message: err.message });
+        }
+        next();
+    });
+}, async (req, res) => {
     try {
         const { name, description, price, category, is_available, is_featured } = req.body;
 
@@ -197,8 +243,18 @@ router.post('/menu', requireAdmin, uploadCloud.single('image'), async (req, res)
     }
 });
 
-router.put('/menu/:id', requireAdmin, uploadCloud.single('image'), async (req, res) => {
+router.put('/menu/:id', requireAdmin, (req, res, next) => {
+    uploadMenu.single('image')(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({ success: false, message: 'Image upload error: ' + err.message });
+        } else if (err) {
+            return res.status(500).json({ success: false, message: err.message });
+        }
+        next();
+    });
+}, async (req, res) => {
     try {
+        console.log("PUT /menu/:id payload:", req.body);
         const { name, description, price, category, is_available, is_featured } = req.body;
 
         const updateData = {};
@@ -209,8 +265,17 @@ router.put('/menu/:id', requireAdmin, uploadCloud.single('image'), async (req, r
         if (is_available !== undefined) updateData.is_available = (is_available === 'true' || is_available === true);
         if (is_featured !== undefined) updateData.is_featured = (is_featured === 'true' || is_featured === true);
 
+        // Retrieve existing item to handle potential image cleanup
+        const existingItem = await Menu.findOne({ id: req.params.id });
+        if (!existingItem) return res.status(404).json({ success: false, message: 'Menu item not found' });
+
         if (req.file) {
             updateData.image_url = req.file.path;
+
+            // Delete the old image from Cloudinary if one existed
+            if (existingItem.image_url) {
+                await deleteCloudinaryImage(existingItem.image_url);
+            }
         }
 
         const updated = await Menu.findOneAndUpdate(
@@ -219,18 +284,25 @@ router.put('/menu/:id', requireAdmin, uploadCloud.single('image'), async (req, r
             { new: true }
         );
 
-        if (!updated) return res.status(404).json({ success: false, message: 'Menu item not found' });
         res.json({ success: true, message: 'Menu item updated', data: updated });
     } catch (err) {
+        // Since Multer handles the file upload before our route handler, if there's a file size error
+        // it throws inside the middleware. We'll handle Multer Errors at the end of the router.
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
 router.delete('/menu/:id', requireAdmin, async (req, res) => {
     try {
-        const item = await Menu.findOneAndDelete({ id: req.params.id });
-        if (!item) return res.status(404).json({ success: false, message: 'Menu item not found' });
+        const existingItem = await Menu.findOne({ id: req.params.id });
+        if (!existingItem) return res.status(404).json({ success: false, message: 'Menu item not found' });
 
+        // Delete the associated image from Cloudinary
+        if (existingItem.image_url) {
+            await deleteCloudinaryImage(existingItem.image_url);
+        }
+
+        await Menu.findOneAndDelete({ id: req.params.id });
         res.json({ success: true, message: 'Menu item deleted' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -238,17 +310,35 @@ router.delete('/menu/:id', requireAdmin, async (req, res) => {
 });
 
 // --- OFFERS MANAGEMENT ---
-router.post('/offers', requireAdmin, uploadCloud.single('image'), async (req, res) => {
+router.get('/offers', requireAdmin, async (req, res) => {
     try {
-        const { title, description, items, original_price, discounted_price, badge } = req.body;
+        const offers = await Offer.find().sort({ createdAt: -1 });
+        res.json({ success: true, data: offers });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+router.post('/offers', requireAdmin, (req, res, next) => {
+    uploadMenu.single('image')(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({ success: false, message: 'Image upload error: ' + err.message });
+        } else if (err) {
+            return res.status(500).json({ success: false, message: err.message });
+        }
+        next();
+    });
+}, async (req, res) => {
+    try {
+        const { title, description, original_price, offer_price, badge } = req.body;
 
         const newOffer = new Offer({
             id: Date.now().toString(),
             title,
-            description,
-            items: JSON.parse(items), // expects array as JSON string from multipart request
-            original_price: Number(original_price),
-            discounted_price: Number(discounted_price),
+            description: description || '',
+            items: [],
+            original_price: original_price ? Number(original_price) : undefined,
+            discounted_price: Number(offer_price),
             badge: badge || '',
             is_active: true,
             image_url: req.file ? req.file.path : ''
@@ -261,21 +351,37 @@ router.post('/offers', requireAdmin, uploadCloud.single('image'), async (req, re
     }
 });
 
-router.put('/offers/:id', requireAdmin, uploadCloud.single('image'), async (req, res) => {
+router.put('/offers/:id', requireAdmin, (req, res, next) => {
+    uploadMenu.single('image')(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({ success: false, message: 'Image upload error: ' + err.message });
+        } else if (err) {
+            return res.status(500).json({ success: false, message: err.message });
+        }
+        next();
+    });
+}, async (req, res) => {
     try {
-        const { title, description, items, original_price, discounted_price, badge, is_active } = req.body;
+        const { title, description, original_price, offer_price, badge, is_active } = req.body;
 
         const updateData = {};
         if (title) updateData.title = title;
-        if (description) updateData.description = description;
-        if (items) updateData.items = JSON.parse(items);
-        if (original_price) updateData.original_price = Number(original_price);
-        if (discounted_price) updateData.discounted_price = Number(discounted_price);
+        if (description !== undefined) updateData.description = description;
+        if (original_price) updateData.original_price = Number(original_price); else updateData.original_price = undefined;
+        if (offer_price) updateData.discounted_price = Number(offer_price);
         if (badge !== undefined) updateData.badge = badge;
         if (is_active !== undefined) updateData.is_active = (is_active === 'true' || is_active === true);
 
+        const existingOffer = await Offer.findOne({ id: req.params.id });
+        if (!existingOffer) return res.status(404).json({ success: false, message: 'Offer not found' });
+
         if (req.file) {
             updateData.image_url = req.file.path;
+
+            // Delete the old image from Cloudinary
+            if (existingOffer.image_url) {
+                await deleteCloudinaryImage(existingOffer.image_url);
+            }
         }
 
         const updated = await Offer.findOneAndUpdate(
@@ -284,7 +390,6 @@ router.put('/offers/:id', requireAdmin, uploadCloud.single('image'), async (req,
             { new: true }
         );
 
-        if (!updated) return res.status(404).json({ success: false, message: 'Offer not found' });
         res.json({ success: true, message: 'Offer updated', data: updated });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -293,8 +398,15 @@ router.put('/offers/:id', requireAdmin, uploadCloud.single('image'), async (req,
 
 router.delete('/offers/:id', requireAdmin, async (req, res) => {
     try {
-        const item = await Offer.findOneAndDelete({ id: req.params.id });
-        if (!item) return res.status(404).json({ success: false, message: 'Offer not found' });
+        const existingOffer = await Offer.findOne({ id: req.params.id });
+        if (!existingOffer) return res.status(404).json({ success: false, message: 'Offer not found' });
+
+        // Delete the old image from Cloudinary
+        if (existingOffer.image_url) {
+            await deleteCloudinaryImage(existingOffer.image_url);
+        }
+
+        await Offer.findOneAndDelete({ id: req.params.id });
         res.json({ success: true, message: 'Offer deleted' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

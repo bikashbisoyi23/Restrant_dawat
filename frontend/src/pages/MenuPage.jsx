@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { menuApi, UPLOADS_URL } from '../services/api';
+import { menuApi, adminApi, UPLOADS_URL } from '../services/api';
 import { Search, Image as ImageIcon } from 'lucide-react';
+import { DEFAULT_IMAGES } from '../utils/defaultImages';
+import { ITEM_IMAGES } from '../utils/itemImages';
 
 const CATEGORIES = ['all', 'starters', 'mains', 'breads', 'desserts', 'beverages'];
 
@@ -85,9 +87,9 @@ export default function MenuPage() {
 
                                     <div style={{ height: 180, width: '100%', background: 'rgba(212,168,83,0.05)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         {item.image_url ? (
-                                            <img src={`${UPLOADS_URL}${item.image_url}`} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                                            <img src={item.image_url.startsWith('http') ? item.image_url : `${UPLOADS_URL}${item.image_url}`} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" onError={(e) => { e.currentTarget.src = ITEM_IMAGES[item.name] || DEFAULT_IMAGES[item.category] || DEFAULT_IMAGES.fallback; }} />
                                         ) : (
-                                            <ImageIcon size={40} color="rgba(212,168,83,0.3)" />
+                                            <img src={ITEM_IMAGES[item.name] || DEFAULT_IMAGES[item.category] || DEFAULT_IMAGES.fallback} alt="Default Fallback" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} loading="lazy" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGES[item.category] || DEFAULT_IMAGES.fallback; }} />
                                         )}
                                         {item.is_featured && <span className="badge" style={{ position: 'absolute', top: 12, right: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>Chef's Pick</span>}
                                         <span style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(15,10,7,0.85)', color: '#D4A853', fontSize: '0.7rem', fontWeight: 700, padding: '4px 10px', borderRadius: 12, textTransform: 'uppercase', backdropFilter: 'blur(4px)' }}>

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { adminApi, UPLOADS_URL } from '../../services/api';
 import { Plus, Pencil, Trash2, Utensils, Image as ImageIcon } from 'lucide-react';
+import { DEFAULT_IMAGES } from '../../utils/defaultImages';
+import { ITEM_IMAGES } from '../../utils/itemImages';
 
 const CATEGORIES = ['starters', 'mains', 'breads', 'desserts', 'beverages'];
 const EMPTY = { name: '', description: '', price: '', category: 'starters', is_available: true, is_featured: false };
@@ -16,9 +18,7 @@ export default function AdminMenu() {
 
     async function load() {
         try {
-            // Re-using the public menu endpoint for fetching, it gets all items
-            const { menuApi } = await import('../../services/api');
-            const res = await menuApi.getAll();
+            const res = await adminApi.getAllMenu();
             setItems(res.data.data);
         } catch { }
         finally { setLoading(false); }
@@ -89,9 +89,9 @@ export default function AdminMenu() {
                         <div key={item.id} className="glass-card" style={{ padding: 0, opacity: item.is_available ? 1 : 0.5, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                             <div style={{ height: 160, background: 'rgba(212,168,83,0.05)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 {item.image_url ? (
-                                    <img src={`${UPLOADS_URL}${item.image_url}`} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src={item.image_url.startsWith('http') ? item.image_url : `${UPLOADS_URL}${item.image_url}`} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
-                                    <ImageIcon size={40} color="rgba(212,168,83,0.3)" />
+                                    <img src={ITEM_IMAGES[item.name] || DEFAULT_IMAGES[item.category] || DEFAULT_IMAGES.fallback} alt="Default Fallback" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} />
                                 )}
                                 <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: 6 }}>
                                     <button onClick={() => openEdit(item)} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', padding: '6px', borderRadius: 4, cursor: 'pointer', color: '#D4A853' }}><Pencil size={14} /></button>

@@ -23,7 +23,7 @@ export default function AdminOffers() {
     useEffect(() => { load(); }, []);
 
     function openAdd() { setForm(EMPTY); setModal('add'); setError(''); setFile(null); }
-    function openEdit(offer) { setForm({ ...offer, original_price: offer.original_price || '', offer_price: offer.offer_price }); setModal(offer); setError(''); setFile(null); }
+    function openEdit(offer) { setForm({ ...offer, original_price: offer.original_price || '', offer_price: offer.discounted_price }); setModal(offer); setError(''); setFile(null); }
 
     async function handleSave(e) {
         e.preventDefault();
@@ -95,10 +95,10 @@ export default function AdminOffers() {
                             <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.2rem', marginBottom: 6 }}>{offer.title}</h3>
                             <p style={{ color: '#9A8A7A', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: 14 }}>{offer.description}</p>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.5rem', color: '#D4A853', fontWeight: 700 }}>₹{offer.offer_price}</span>
+                                <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.5rem', color: '#D4A853', fontWeight: 700 }}>₹{offer.discounted_price}</span>
                                 {offer.original_price && <span style={{ textDecoration: 'line-through', color: '#9A8A7A' }}>₹{offer.original_price}</span>}
                                 {offer.original_price && <span style={{ background: 'rgba(39,174,96,0.2)', color: '#2ecc71', padding: '2px 8px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 700 }}>
-                                    {Math.round((1 - offer.offer_price / offer.original_price) * 100)}% OFF
+                                    {Math.round((1 - offer.discounted_price / offer.original_price) * 100)}% OFF
                                 </span>}
                             </div>
                             <div style={{ marginTop: 10, fontSize: '0.75rem', color: offer.is_active ? '#2ecc71' : '#9A8A7A' }}>
@@ -140,7 +140,7 @@ export default function AdminOffers() {
                                 <input type="file" accept="image/*" className="form-input" style={{ padding: '8px' }} onChange={e => setFile(e.target.files[0])} />
                                 {modal !== 'add' && modal?.image_url && !file && (
                                     <div style={{ fontSize: '0.8rem', color: '#9A8A7A', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        Current image: <img src={`${UPLOADS_URL}${modal.image_url}`} style={{ height: 40, borderRadius: 4, objectFit: 'cover' }} alt="Current Offer" loading="lazy" />
+                                        Current image: <img src={modal.image_url.startsWith('http') ? modal.image_url : `${UPLOADS_URL}${modal.image_url}`} style={{ height: 40, borderRadius: 4, objectFit: 'cover' }} alt="Current Offer" loading="lazy" />
                                     </div>
                                 )}
                             </div>
